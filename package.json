@@ -1,0 +1,13 @@
+{
+  "name": "fbs-stdict-challenge",
+  "version": "1.0.0",
+  "description": "Forbes code challenge",
+  "main": "main.js",
+  "scripts": {
+    "start": "http-server -o / .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "http-server": "^14.1.0"
+  }
+}

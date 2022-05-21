@@ -22,25 +22,61 @@ const splitAndTrim = (str, regex) => {
   return str.trim().split(regex).filter((string) => string !== '')
 };
 
+const stringComparison = (word, other) => {
+  let divisor = other.length;
+  if (word.length > other.length) {
+    divisor = word.length;
+  }
+
+  const wordSplit = word.split('');
+  const otherSplit = other.split('');
+
+  let matchingCharacters = 0;
+  wordSplit.forEach((character) => {
+    if (otherSplit.includes(character)) {
+      matchingCharacters++;
+    }
+  });
+
+  return matchingCharacters / divisor;
+}
+
 const determineMatch = (word, dictionary) => {
   if (dictionary.includes(word)) {
-    return 1;
+    return {
+      value: 1,
+      word,
+    };
   }
 
   else {
-    return 0;
+    const matchValues = dictionary.map((dictionaryWord) => {
+      return stringComparison(word, dictionaryWord)
+    });
+    let best = -1;
+    let indexOfBest = -1;
+    for (let i = 0; i < matchValues.length; i++) {
+      if (matchValues[i] > best) {
+        best = matchValues[i];
+        indexOfBest = i;
+      }
+    }
+    return {
+      value: best,
+      word: dictionary[indexOfBest]
+    }
   }
 }
 
 const filterWordsNotPresent = (words, dictionary) => {
-  const mapped = words.map((word) => ({
+  const mappedWords = words.map((word) => ({
     word,
     match: determineMatch(word, dictionary),
   }));
-  mapped.forEach((value) => {
-    if (value.match < 1) {
+  mappedWords.forEach((word) => {
+    if (word.match.value < 1) {
       const listElement = document.createElement('li');
-      listElement.innerHTML = value.word;
+      listElement.innerHTML = `${word.word} : ${word.match.word} @ ${(word.match.value * 100).toFixed(2)}%`;
       elements.words.appendChild(listElement);
     }
   });

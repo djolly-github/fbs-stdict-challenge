@@ -22,8 +22,28 @@ const splitAndTrim = (str, regex) => {
   return str.trim().split(regex).filter((string) => string !== '')
 };
 
-const filterWordsNotPresent = (words) => {
-  console.log(words);
+const determineMatch = (word, dictionary) => {
+  if (dictionary.includes(word)) {
+    return 1;
+  }
+
+  else {
+    return 0;
+  }
+}
+
+const filterWordsNotPresent = (words, dictionary) => {
+  const mapped = words.map((word) => ({
+    word,
+    match: determineMatch(word, dictionary),
+  }));
+  mapped.forEach((value) => {
+    if (value.match < 1) {
+      const listElement = document.createElement('li');
+      listElement.innerHTML = value.word;
+      elements.words.appendChild(listElement);
+    }
+  });
 };
 
 const resolveBodyElements = () => {
@@ -52,7 +72,7 @@ const resolveParsedTextData = async (data) => {
   });
   elements.story.innerHTML = data[1];
   const storyWords = splitAndTrim(data[1], new RegExp(regex.whitespace.source + '|' + regex.punctuation.source))
-  filterWordsNotPresent(storyWords);
+  filterWordsNotPresent(storyWords, dictionaryWords);
   return Promise.resolve(data);
 }
 

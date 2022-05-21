@@ -1,5 +1,60 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
 
+::selection,
+::-moz-selection {
+  background-color: #200f;
+  color: #dccf;
+}
+
+body {
+  background-color: #dccf;
+}
+
 #app {
   font-family: 'Open Sans', sans-serif;
+  width: 24rem;
+  margin: auto;
+}
+
+h1,
+h2,
+ul,
+p {
+  width: auto;
+  max-width: 24rem;
+}
+
+h2 {
+  border: 1px solid black;
+  border-left: none;
+  border-right: none;
+  line-height: 2rem;
+  padding: 1rem 0;
+  font-size: 1.5rem;
+}
+
+table {
+  width: 100%;
+  border-spacing: 0;
+  border: 2px solid black;
+}
+
+td {
+  padding: 0.25rem;
+  border: 1px solid black;
+}
+
+tr:nth-child(even) {
+  background-color: #0002;
+}
+
+thead {
+  background-color: #0004;
+}
+
+@media screen and (max-width: 500px) {
+  #app {
+    width: 100%;
+    margin: 0;
+  }
 }

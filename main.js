@@ -14,9 +14,9 @@ const fetchParams = {
 };
 
 const resolveBodyElements = () => {
-  elements.dictionary = document.querySelector('#dictionary');
-  elements.story = document.querySelector('#story');
-  elements.words = document.querySelector('#words');
+  elements.dictionary = document.querySelector('#dictionary ul');
+  elements.story = document.querySelector('#story p');
+  elements.words = document.querySelector('#words ul');
 };
 
 const getTextData = async () => {
@@ -32,7 +32,12 @@ const parseTextData = async (responses) => {
 }
 
 const resolveParsedTextData = async (data) => {
-  console.log(data)
+  data[0].forEach((string) => {
+    const listElement = document.createElement('li');
+    listElement.innerHTML = string;
+    elements.dictionary.appendChild(listElement);
+  });
+  elements.story.innerHTML = data[1];
   return Promise.resolve(data);
 }
 

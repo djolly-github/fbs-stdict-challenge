@@ -111,8 +111,8 @@ const filterWordsNotPresent = (words, dictionary) => {
   }));
   mappedWords.forEach((word) => {
     if (word.match.value < 1) {
-      const listElement = document.createElement('li');
-      listElement.innerHTML = `${word.word} : ${word.match.word} @ ${(word.match.value * 100).toFixed(2)}%`;
+      const listElement = document.createElement('tr');
+      listElement.innerHTML = `<td>${word.word}</td><td>${word.match.word}</td><td>${(word.match.value * 100).toFixed(2)}</td>`;
       elements.words.appendChild(listElement);
     }
   });
@@ -124,7 +124,7 @@ const filterWordsNotPresent = (words, dictionary) => {
 const resolveBodyElements = () => {
   elements.dictionary = document.querySelector('#dictionary ul');
   elements.story = document.querySelector('#story p');
-  elements.words = document.querySelector('#words ul');
+  elements.words = document.querySelector('#words tbody');
 };
 
 /**

@@ -19,8 +19,11 @@ const fetchParams = {
 const elements = {
   dictionary: null,
   story: null,
-  words: null
-}
+  words: null,
+  optionsIncludePunctuation: null,
+  optionsIncludeCapitalization: null,
+  optionsSubmit: null,
+};
 
 /**
  * Regular Expressions
@@ -64,7 +67,7 @@ const stringComparison = (word, other) => {
   });
 
   return matchingCharacters / divisor;
-}
+};
 
 /**
  * 
@@ -97,7 +100,7 @@ const determineMatch = (word, dictionary) => {
       word: dictionary[indexOfBest]
     }
   }
-}
+};
 
 /**
  * Finds words not present in the dictionary and displays their closest matches
@@ -122,10 +125,22 @@ const filterWordsNotPresent = (words, dictionary) => {
  * Get references to body elements on page load
  */
 const resolveBodyElements = () => {
-  elements.dictionary = document.querySelector('#dictionary ul');
-  elements.story = document.querySelector('#story p');
   elements.words = document.querySelector('#words tbody');
+  elements.story = document.querySelector('#story p');
+  elements.dictionary = document.querySelector('#dictionary ul');
+  elements.optionsIncludePunctuation = document.querySelector('#punctuation');
+  elements.optionsIncludeCapitalization = document.querySelector('#capitalization');
+  elements.optionsSubmit = document.querySelector('#submit');
 };
+
+/**
+ * Resets body elements that will be populated later
+ */
+const resetBodyElements = () => {
+  elements.words.innerHTML = '';
+  elements.story.innerHTML = '';
+  elements.dictionary.innerHTML = '';
+}
 
 /**
  * Creates fetch requests for text URIs
@@ -135,7 +150,7 @@ const getTextData = async () => {
   const requests = Object.values(requestURIs).map((uri) => fetch(uri, fetchParams));
   const responses = await Promise.all(requests);
   return responses;
-}
+};
 
 /**
  * Parses retrieved data into text() form
@@ -145,7 +160,7 @@ const getTextData = async () => {
 const parseTextData = async (responses) => {
   const parsed = await Promise.all(responses.map((response) => response.text()));
   return parsed;
-}
+};
 
 /**
  * Utilizes retrieved text data in the app
@@ -163,6 +178,18 @@ const resolveParsedTextData = async (data) => {
   const storyWords = splitAndTrim(data[1], new RegExp(regex.whitespace.source + '|' + regex.punctuation.source))
   filterWordsNotPresent(storyWords, dictionaryWords);
   return Promise.resolve(data);
+};
+
+/**
+ * Handler for options submit button
+ * @param {Event} e Event data
+ */
+const onSubmit = (e) => {
+  e.preventDefault();
+  resetBodyElements();
+  getTextData()
+    .then(parseTextData)
+    .then(resolveParsedTextData)
 }
 
 /**
@@ -170,9 +197,7 @@ const resolveParsedTextData = async (data) => {
  */
 const init = () => {
   resolveBodyElements();
-  getTextData()
-    .then(parseTextData)
-    .then(resolveParsedTextData)
+  elements.optionsSubmit.addEventListener('click', onSubmit);
 };
 
 window.onload = init;

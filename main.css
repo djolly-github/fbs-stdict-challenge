@@ -52,6 +52,30 @@ thead {
   background-color: #0004;
 }
 
+.input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0.25rem 0;
+  grid-gap: 0.25rem;
+}
+
+input[type='checkbox'] {
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+}
+
+label,
+button {
+  font-size: 1.25rem;
+}
+
+button {
+  flex: 1 1 auto;
+  padding: 0.25rem;
+}
+
 @media screen and (max-width: 500px) {
   #app {
     width: 100%;

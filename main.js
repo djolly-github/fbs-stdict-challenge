@@ -94,17 +94,23 @@ const compareStrings = (stringA, stringB) => {
   // find any matching characters
   let matchingCharacters = 0;
   for (i = 0; i < splitLarger.length; i++) {
+    // if both letters are the same, flag as matching character
     if (splitLarger[i] === splitSmaller[i]) {
       matchingCharacters++;
     }
+    // otherwise find the closest character
     else {
+      // the closest index of a character identical to the current character
       let closest = 0;
+      // whether this found a character at all
       let found = false;
       for (j = 0; j < splitSmaller.length; j++) {
-        let diffNext = Math.abs(i - j);
-        let diffCurr = Math.abs(i - closest);
+        // determine the distance between the next and previously tracked indices
+        let distanceToCurrent = Math.abs(i - j);
+        let distanceToPrevious = Math.abs(i - closest);
+        // if the characters match and the current distance is less than the previous, track the new index
         if (splitLarger[i] === splitSmaller[j]
-          && diffNext < diffCurr) {
+          && distanceToCurrent < distanceToPrevious) {
             closest = j;
             found = true;
           }

@@ -29,9 +29,18 @@ const elements = {
  * Regular Expressions
  */
 const regex = {
-  whitespace: new RegExp(/\n|\s/gm),
-  punctuation: new RegExp(/[^(\w|\d|^\'|\u2019)]/gm),
+  filterWhitespace: new RegExp(/\n|\s/gm),
+  filterAlphaNumericAndApostrophe: new RegExp(/[^(\w|\d|^\'|\u2019)]/gm),
+  notAlphaNumeric: new RegExp(/[^(\w|\d|)]/gm)
 };
+
+/**
+ * State of options flags
+ */
+const flags = {
+  punctuation: true,
+  capitalization: true,
+}
 
 /**
  * Utility to split a string into an array following a regular expression,
@@ -85,6 +94,14 @@ const determineMatch = (word, dictionary) => {
 
   else {
     const matchValues = dictionary.map((dictionaryWord) => {
+      if (flags.punctuation === true) {
+        word = word.replace(regex.notAlphaNumeric, '');
+        dictionaryWord = dictionaryWord.replace(regex.notAlphaNumeric, '');
+      }
+      if (flags.capitalization === true) {
+        word = word.toLowerCase();
+        dictionaryWord = dictionaryWord.toLowerCase();
+      }
       return stringComparison(word, dictionaryWord)
     });
     let best = -1;
@@ -168,17 +185,25 @@ const parseTextData = async (responses) => {
  * @returns data turned into Promise
  */
 const resolveParsedTextData = async (data) => {
-  const dictionaryWords = splitAndTrim(data[0], regex.whitespace);
+  const dictionaryWords = splitAndTrim(data[0], regex.filterWhitespace);
   dictionaryWords.forEach((string) => {
     const listElement = document.createElement('li');
     listElement.innerHTML = string;
     elements.dictionary.appendChild(listElement);
   });
   elements.story.innerHTML = data[1];
-  const storyWords = splitAndTrim(data[1], new RegExp(regex.whitespace.source + '|' + regex.punctuation.source))
+  const storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterAlphaNumericAndApostrophe.source))
   filterWordsNotPresent(storyWords, dictionaryWords);
   return Promise.resolve(data);
 };
+
+/**
+ * Sets the current state of the options flags
+ */
+setFlags = () => {
+  flags.capitalization = elements.optionsIncludeCapitalization.checked;
+  flags.punctuation = elements.optionsIncludePunctuation.checked;
+}
 
 /**
  * Handler for options submit button
@@ -187,6 +212,7 @@ const resolveParsedTextData = async (data) => {
 const onSubmit = (e) => {
   e.preventDefault();
   resetBodyElements();
+  setFlags();
   getTextData()
     .then(parseTextData)
     .then(resolveParsedTextData)

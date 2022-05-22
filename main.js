@@ -66,7 +66,8 @@ const splitAndTrim = (str, regex) => {
 };
 
 /**
- * Compares two strings against each other to determine how close they are to each other
+ * Compares two strings against each other to determine how close they are to each other;
+ * Implements Levenshtein distance, inspired by https://stackoverflow.com/a/36566052, https://www.tutorialspoint.com/levenshtein-distance-in-javascript
  * @param {string} stringA The string to compare with
  * @param {string} stringB The string to compare against
  * @returns Value between 0 (no match) and 1 (full match)
@@ -91,32 +92,37 @@ const compareStrings = (stringA, stringB) => {
   const splitLarger = larger.split('');
   const splitSmaller = smaller.split('');
 
-  // find any matching characters
-  let matchingCharacters = 0;
-  for (i = 0; i < splitLarger.length; i++) {
-    if (splitLarger[i] === splitSmaller[i]) {
-      matchingCharacters++;
-    }
-    else {
-      let closest = 0;
-      let found = false;
-      for (j = 0; j < splitSmaller.length; j++) {
-        let diffNext = Math.abs(i - j);
-        let diffCurr = Math.abs(i - closest);
-        if (splitLarger[i] === splitSmaller[j]
-          && diffNext < diffCurr) {
-            closest = j;
-            found = true;
-          }
-      }
-      if (found) {
-        matchingCharacters += 1 - (Math.abs(i - closest) / divisor)
-      }
+  return (divisor - minimumEdits(splitLarger, splitSmaller)) / parseFloat(divisor);
+};
+
+/**
+ * Compares two strings to determine how many operations it would take to match the larger string to the smaller string
+ * @param {Array<string>} larger The larger string to compare against
+ * @param {Array<string>} smaller The smaller string to compare against
+ * @returns The number of operations it would take to turn the larger string into the smaller string
+ */
+const minimumEdits = (larger, smaller) => {
+  const costs = [...Array(smaller.length + 1)].map(() => [...Array(larger.length + 1)]);
+
+  for (let i = 0; i <= smaller.length; i += 1) {
+    costs[i][0] = i;
+  }
+  for (let j = 0; j <= larger.length; j += 1) {
+    costs[0][j] = j;
+  }
+  for (let i = 1; i <= smaller.length; i += 1) {
+    for (let j = 1; j <= larger.length; j += 1) {
+      costs[i][j] = Math.min(
+        // deletion
+        costs[i][j - 1] + 1,
+        // insertion
+        costs[i - 1][j] + 1,
+        // substitution
+        costs[i - 1][j - 1] + (larger[j - 1] !== smaller[i - 1]),
+      );
     }
   }
-
-  // match value is a ratio of matches to length
-  return matchingCharacters / divisor;
+  return costs[smaller.length][larger.length];
 };
 
 /**

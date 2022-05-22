@@ -42,6 +42,10 @@ const flags = {
   capitalization: true,
 }
 
+const data = null;
+
+// String Utility Functions
+
 /**
  * Utility to split a string into an array following a regular expression,
  * ensuring trailing whitespaces are culled from the resulting array
@@ -55,26 +59,30 @@ const splitAndTrim = (str, regex) => {
 
 /**
  * Compares two strings against each other to determine how close they are to each other
- * @param {string} word The string to compare with
- * @param {string} other The string to compare against
+ * @param {string} wordA The string to compare with
+ * @param {string} wordB The string to compare against
  * @returns Value between 0 (no match) and 1 (full match)
  */
-const stringComparison = (word, other) => {
-  let divisor = other.length;
-  if (word.length > other.length) {
-    divisor = word.length;
+const compareStrings = (wordA, wordB) => {
+  // determine larger length
+  let divisor = wordB.length;
+  if (wordA.length > wordB.length) {
+    divisor = wordA.length;
   }
 
-  const wordSplit = word.split('');
-  const otherSplit = other.split('');
+  // split words by character
+  const splitA = wordA.split('');
+  const splitB = wordB.split('');
 
+  // find any matching characters
   let matchingCharacters = 0;
-  wordSplit.forEach((character) => {
-    if (otherSplit.includes(character)) {
+  splitA.forEach((character) => {
+    if (splitB.includes(character)) {
       matchingCharacters++;
     }
   });
 
+  // match value is a ratio of matches to length
   return matchingCharacters / divisor;
 };
 
@@ -84,7 +92,9 @@ const stringComparison = (word, other) => {
  * @param {Array<string>} dictionary The dictionary to search for matches in
  * @returns Object containing 'value' (of type number, the % matching) and 'word' (of type string, the best match)
  */
-const determineMatch = (word, dictionary) => {
+const determineBestMatch = (word, dictionary) => {
+  // return early if the dictionary includes a word
+  // with an object containing a value of 1 and the word set to itself
   if (dictionary.includes(word)) {
     return {
       value: 1,
@@ -93,17 +103,22 @@ const determineMatch = (word, dictionary) => {
   }
 
   else {
+    // iterate over the dictionary assigning a match value to each dictionary word
     const matchValues = dictionary.map((dictionaryWord) => {
-      if (flags.punctuation === true) {
+      // if not counting punctuation, filter it from the words
+      if (flags.punctuation === false) {
         word = word.replace(regex.notAlphaNumeric, '');
         dictionaryWord = dictionaryWord.replace(regex.notAlphaNumeric, '');
       }
-      if (flags.capitalization === true) {
+      // if not counting capitalization, make words lowercase
+      if (flags.capitalization === false) {
         word = word.toLowerCase();
         dictionaryWord = dictionaryWord.toLowerCase();
       }
-      return stringComparison(word, dictionaryWord)
+      return compareStrings(word, dictionaryWord)
     });
+
+    // determine the best match and its index by comparing match values to each other
     let best = -1;
     let indexOfBest = -1;
     for (let i = 0; i < matchValues.length; i++) {
@@ -112,6 +127,9 @@ const determineMatch = (word, dictionary) => {
         indexOfBest = i;
       }
     }
+
+    // return an object with value being the best match value
+    // and the word being the best matching word in the dictionary
     return {
       value: best,
       word: dictionary[indexOfBest]
@@ -119,29 +137,12 @@ const determineMatch = (word, dictionary) => {
   }
 };
 
-/**
- * Finds words not present in the dictionary and displays their closest matches
- * @param {Array<string>} words The words to find matches for
- * @param {Array<string>} dictionary The words to find matches against
- */
-const filterWordsNotPresent = (words, dictionary) => {
-  const mappedWords = words.map((word) => ({
-    word,
-    match: determineMatch(word, dictionary),
-  }));
-  mappedWords.forEach((word) => {
-    if (word.match.value < 1) {
-      const listElement = document.createElement('tr');
-      listElement.innerHTML = `<td>${word.word}</td><td>${word.match.word}</td><td>${(word.match.value * 100).toFixed(2)}</td>`;
-      elements.words.appendChild(listElement);
-    }
-  });
-};
+// UI Modification Functions
 
 /**
  * Get references to body elements on page load
  */
-const resolveBodyElements = () => {
+ const resolveBodyElements = () => {
   elements.words = document.querySelector('#words tbody');
   elements.story = document.querySelector('#story p');
   elements.dictionary = document.querySelector('#dictionary ul');
@@ -158,6 +159,37 @@ const resetBodyElements = () => {
   elements.story.innerHTML = '';
   elements.dictionary.innerHTML = '';
 }
+
+/**
+ * Modifies the UI to display words not present in the dictionary
+ * @param {Array<string>} matchedWords The word match data array
+ */
+const displayClosestMatches = (matchedWords) => {
+  matchedWords.forEach((word) => {
+    if (word.match.value < 1) {
+      const listElement = document.createElement('tr');
+      listElement.innerHTML = `<td>${word.word}</td><td>${word.match.word}</td><td>${(word.match.value * 100).toFixed(2)}</td>`;
+      elements.words.appendChild(listElement);
+    }
+  });
+};
+
+/**
+ * Modifies the UI to display the resulting parsed text data
+ * @param {Array<string>} dictionaryWords The array of words in the dictionary
+ * @param {string} story The story string
+ */
+const displayParsedTextData = (dictionaryWords, story) => {
+  dictionaryWords.forEach((string) => {
+    const listElement = document.createElement('li');
+    listElement.innerHTML = string;
+    elements.dictionary.appendChild(listElement);
+  });
+
+  elements.story.innerHTML = story;
+}
+
+// Promise Functions
 
 /**
  * Creates fetch requests for text URIs
@@ -186,16 +218,22 @@ const parseTextData = async (responses) => {
  */
 const resolveParsedTextData = async (data) => {
   const dictionaryWords = splitAndTrim(data[0], regex.filterWhitespace);
-  dictionaryWords.forEach((string) => {
-    const listElement = document.createElement('li');
-    listElement.innerHTML = string;
-    elements.dictionary.appendChild(listElement);
-  });
-  elements.story.innerHTML = data[1];
-  const storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterAlphaNumericAndApostrophe.source))
-  filterWordsNotPresent(storyWords, dictionaryWords);
+  const storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterAlphaNumericAndApostrophe.source));
+  const story = data[1];
+
+  // iterate over the story words by finding the best match
+  const matchedWords = storyWords.map((word) => ({
+    word,
+    match: determineBestMatch(word, dictionaryWords),
+  }));
+
+  displayParsedTextData(dictionaryWords, story);
+  displayClosestMatches(matchedWords);
+  
   return Promise.resolve(data);
 };
+
+// State Functions
 
 /**
  * Sets the current state of the options flags
@@ -203,7 +241,9 @@ const resolveParsedTextData = async (data) => {
 setFlags = () => {
   flags.capitalization = elements.optionsIncludeCapitalization.checked;
   flags.punctuation = elements.optionsIncludePunctuation.checked;
-}
+};
+
+// Event Handlers
 
 /**
  * Handler for options submit button
@@ -217,6 +257,8 @@ const onSubmit = (e) => {
     .then(parseTextData)
     .then(resolveParsedTextData)
 }
+
+// Main Functions
 
 /**
  * Entry point for the app, assigned to window.onload

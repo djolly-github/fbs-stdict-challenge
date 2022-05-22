@@ -42,7 +42,15 @@ const flags = {
   capitalization: true,
 }
 
-const data = null;
+/**
+ * State of words data
+ */
+const stateData = {
+  fetched: false,
+  dictionaryWords: null,
+  storyWords: null,
+  story: null,
+};
 
 // String Utility Functions
 
@@ -142,7 +150,7 @@ const determineBestMatch = (word, dictionary) => {
 /**
  * Get references to body elements on page load
  */
- const resolveBodyElements = () => {
+const resolveBodyElements = () => {
   elements.words = document.querySelector('#words tbody');
   elements.story = document.querySelector('#story p');
   elements.dictionary = document.querySelector('#dictionary ul');
@@ -165,7 +173,9 @@ const resetBodyElements = () => {
  * @param {Array<string>} matchedWords The word match data array
  */
 const displayClosestMatches = (matchedWords) => {
+  // Make a table cell for each matched word
   matchedWords.forEach((word) => {
+    // Only include words with less than 100% match value
     if (word.match.value < 1) {
       const listElement = document.createElement('tr');
       listElement.innerHTML = `<td>${word.word}</td><td>${word.match.word}</td><td>${(word.match.value * 100).toFixed(2)}</td>`;
@@ -208,7 +218,7 @@ const getTextData = async () => {
  */
 const parseTextData = async (responses) => {
   const parsed = await Promise.all(responses.map((response) => response.text()));
-  return parsed;
+  return setData(parsed);
 };
 
 /**
@@ -217,19 +227,15 @@ const parseTextData = async (responses) => {
  * @returns data turned into Promise
  */
 const resolveParsedTextData = async (data) => {
-  const dictionaryWords = splitAndTrim(data[0], regex.filterWhitespace);
-  const storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterAlphaNumericAndApostrophe.source));
-  const story = data[1];
-
   // iterate over the story words by finding the best match
-  const matchedWords = storyWords.map((word) => ({
+  const matchedWords = data.storyWords.map((word) => ({
     word,
-    match: determineBestMatch(word, dictionaryWords),
+    match: determineBestMatch(word, data.dictionaryWords),
   }));
 
-  displayParsedTextData(dictionaryWords, story);
+  displayParsedTextData(data.dictionaryWords, data.story);
   displayClosestMatches(matchedWords);
-  
+
   return Promise.resolve(data);
 };
 
@@ -243,6 +249,19 @@ setFlags = () => {
   flags.punctuation = elements.optionsIncludePunctuation.checked;
 };
 
+/**
+ * Sets the current state data
+ * @param {Array<string>} data The data string array to store
+ * @returns The stateData object (to retain Promise structure)
+ */
+setData = (data) => {
+  stateData.dictionaryWords = splitAndTrim(data[0], regex.filterWhitespace);
+  stateData.storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterAlphaNumericAndApostrophe.source));
+  stateData.story = data[1];
+  stateData.fetched = true;
+  return stateData;
+}
+
 // Event Handlers
 
 /**
@@ -253,9 +272,14 @@ const onSubmit = (e) => {
   e.preventDefault();
   resetBodyElements();
   setFlags();
-  getTextData()
-    .then(parseTextData)
-    .then(resolveParsedTextData)
+  if (stateData.fetched === false) {
+    getTextData()
+      .then(parseTextData)
+      .then(resolveParsedTextData)
+  }
+  else {
+    resolveParsedTextData(stateData);
+  }
 }
 
 // Main Functions

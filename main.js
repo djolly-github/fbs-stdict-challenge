@@ -30,8 +30,8 @@ const elements = {
  */
 const regex = {
   filterWhitespace: new RegExp(/\n|\s/gm),
-  filterAlphaNumericAndApostrophe: new RegExp(/[^(\w|\d|^\'|\u2019)]/gm),
-  notAlphaNumeric: new RegExp(/[^(\w|\d|)]/gm)
+  filterWordRelatedCharacters: new RegExp(/[^(\w|\d|^\'|\u2019|\-)]/gm),
+  notAlphaNumeric: new RegExp(/[^(\w|\d)]/gm)
 };
 
 /**
@@ -67,28 +67,53 @@ const splitAndTrim = (str, regex) => {
 
 /**
  * Compares two strings against each other to determine how close they are to each other
- * @param {string} wordA The string to compare with
- * @param {string} wordB The string to compare against
+ * @param {string} stringA The string to compare with
+ * @param {string} stringB The string to compare against
  * @returns Value between 0 (no match) and 1 (full match)
  */
-const compareStrings = (wordA, wordB) => {
-  // determine larger length
-  let divisor = wordB.length;
-  if (wordA.length > wordB.length) {
-    divisor = wordA.length;
+const compareStrings = (stringA, stringB) => {
+  // first determine if they are the exact same strings
+  if (stringA === stringB) {
+    return 1;
   }
 
+  // determine larger length
+  let larger = stringA;
+  let smaller = stringB;
+  if (stringB.length > stringA.length) {
+    larger = stringB;
+    smaller = stringA;
+  }
+
+  let divisor = larger.length;
+
   // split words by character
-  const splitA = wordA.split('');
-  const splitB = wordB.split('');
+  const splitLarger = larger.split('');
+  const splitSmaller = smaller.split('');
 
   // find any matching characters
   let matchingCharacters = 0;
-  splitA.forEach((character) => {
-    if (splitB.includes(character)) {
+  for (i = 0; i < splitLarger.length; i++) {
+    if (splitLarger[i] === splitSmaller[i]) {
       matchingCharacters++;
     }
-  });
+    else {
+      let closest = 0;
+      let found = false;
+      for (j = 0; j < splitSmaller.length; j++) {
+        let diffNext = Math.abs(i - j);
+        let diffCurr = Math.abs(i - closest);
+        if (splitLarger[i] === splitSmaller[j]
+          && diffNext < diffCurr) {
+            closest = j;
+            found = true;
+          }
+      }
+      if (found) {
+        matchingCharacters += 1 - (Math.abs(i - closest) / divisor)
+      }
+    }
+  }
 
   // match value is a ratio of matches to length
   return matchingCharacters / divisor;
@@ -256,7 +281,7 @@ setFlags = () => {
  */
 setData = (data) => {
   stateData.dictionaryWords = splitAndTrim(data[0], regex.filterWhitespace);
-  stateData.storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterAlphaNumericAndApostrophe.source));
+  stateData.storyWords = splitAndTrim(data[1], new RegExp(regex.filterWhitespace.source + '|' + regex.filterWordRelatedCharacters.source));
   stateData.story = data[1];
   stateData.fetched = true;
   return stateData;
